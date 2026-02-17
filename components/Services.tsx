@@ -103,15 +103,15 @@ const modules = [
 ];
 
 const colorClasses: Record<string, string> = {
-  blue: 'text-blue-500 bg-blue-500/10 group-hover:bg-blue-500',
-  emerald: 'text-emerald-500 bg-emerald-500/10 group-hover:bg-emerald-500',
-  indigo: 'text-indigo-500 bg-indigo-500/10 group-hover:bg-indigo-500',
-  purple: 'text-purple-500 bg-purple-500/10 group-hover:bg-purple-500',
-  pink: 'text-pink-500 bg-pink-500/10 group-hover:bg-pink-500',
-  orange: 'text-orange-500 bg-orange-500/10 group-hover:bg-orange-500',
-  rose: 'text-rose-500 bg-rose-500/10 group-hover:bg-rose-500',
-  amber: 'text-amber-500 bg-amber-500/10 group-hover:bg-amber-500',
-  cyan: 'text-cyan-500 bg-cyan-500/10 group-hover:bg-cyan-500',
+  blue: 'text-[#C5A059] bg-[#C5A059]/10 group-hover:bg-[#C5A059]',
+  emerald: 'text-[#C5A059] bg-[#C5A059]/10 group-hover:bg-[#C5A059]',
+  indigo: 'text-[#C5A059] bg-[#C5A059]/10 group-hover:bg-[#C5A059]',
+  purple: 'text-[#C5A059] bg-[#C5A059]/10 group-hover:bg-[#C5A059]',
+  pink: 'text-[#C5A059] bg-[#C5A059]/10 group-hover:bg-[#C5A059]',
+  orange: 'text-[#C5A059] bg-[#C5A059]/10 group-hover:bg-[#C5A059]',
+  rose: 'text-[#C5A059] bg-[#C5A059]/10 group-hover:bg-[#C5A059]',
+  amber: 'text-[#C5A059] bg-[#C5A059]/10 group-hover:bg-[#C5A059]',
+  cyan: 'text-[#C5A059] bg-[#C5A059]/10 group-hover:bg-[#C5A059]',
 };
 
 const Services: React.FC = () => {
@@ -119,7 +119,7 @@ const Services: React.FC = () => {
     <section id="services" className="py-32 bg-white relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="grid lg:grid-cols-2 gap-20 items-start">
-          
+
           <div className="space-y-8">
             {modules.map((module, index) => (
               <div
@@ -138,7 +138,7 @@ const Services: React.FC = () => {
                     <ul className="grid gap-3">
                       {module.items.map((item, i) => (
                         <li key={i} className="flex items-start gap-3 text-slate-500 text-sm font-semibold">
-                          <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-slate-300 flex-shrink-0 group-hover:bg-blue-400 transition-colors"></span>
+                          <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-slate-300 flex-shrink-0 group-hover:bg-[#C5A059] transition-colors"></span>
                           {item}
                         </li>
                       ))}
@@ -150,28 +150,28 @@ const Services: React.FC = () => {
           </div>
 
           <div className="lg:sticky lg:top-32 animate-fade-in" style={{ animationDelay: '0.4s' }}>
-            <span className="text-blue-600 font-black text-xs uppercase tracking-[0.4em] mb-6 block">Inovação e Assessoria</span>
-            <h2 className="text-5xl lg:text-6xl font-black text-slate-900 leading-[1.05] mb-10 tracking-tighter">
-              A Nexus <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 italic">conecta</span> sua empresa ao sucesso governamental.
+            <span className="text-[#C5A059] font-black text-xs uppercase tracking-[0.4em] mb-6 block">Inovação e Assessoria</span>
+            <h2 className="text-5xl lg:text-6xl font-black text-[#0A2342] leading-[1.05] mb-10 tracking-tighter">
+              A Nexus <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#C5A059] to-[#E5C789] italic">conecta</span> sua empresa ao sucesso governamental.
             </h2>
-            
+
             <div className="space-y-8 text-xl text-slate-500 font-medium leading-relaxed mb-12">
               <p>
                 Nossa assessoria digital combina <span className="text-slate-900 font-bold">inteligência de dados</span> com excelência jurídica para garantir que sua empresa não apenas participe, mas vença.
               </p>
               <p>
-                Eliminamos a burocracia do caminho, permitindo que sua equipe foque no que realmente importa: <span className="text-blue-600 font-bold underline decoration-blue-200 decoration-4 underline-offset-4">a excelência na entrega</span>.
+                Eliminamos a burocracia do caminho, permitindo que sua equipe foque no que realmente importa: <span className="text-[#C5A059] font-bold underline decoration-[#C5A059]/20 decoration-4 underline-offset-4">a excelência na entrega</span>.
               </p>
             </div>
-            
-            <div className="mt-12 flex items-center gap-6 p-8 bg-[#002B5B] rounded-[2.5rem] text-white shadow-2xl shadow-blue-900/30">
-               <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center">
-                 <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-               </div>
-               <div>
-                 <p className="text-[10px] font-black uppercase tracking-widest text-blue-100">Pronto para o próximo nível?</p>
-                 <p className="text-xl font-black tracking-tight">Sua jornada rumo ao contrato público começa aqui.</p>
-               </div>
+
+            <div className="mt-12 flex items-center gap-6 p-8 bg-[#0A2342] rounded-[2.5rem] text-white shadow-2xl shadow-slate-900/30 border border-[#C5A059]/20">
+              <div className="w-32 h-32 flex items-center justify-center mb-8 overflow-hidden">
+                <img src="/logo-nexus.png.png" alt="Nexus Logo" className="w-full h-full object-contain scale-150" />
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-[#E5C789]">Pronto para o próximo nível?</p>
+                <p className="text-xl font-black tracking-tight">Sua jornada rumo ao contrato público começa aqui.</p>
+              </div>
             </div>
           </div>
 

@@ -12,7 +12,7 @@ import { mockLicitacoes, mockEventosCalendario } from './mockData';
 import { Licitacao, EventoCalendario, StatusLicitacao, ContratoAssessoria, MetodoPagamento, ModeloContrato, DocumentoPDF } from './types';
 import { supabase } from './services/supabase';
 
-const COLORS = ['#10b981', '#1e293b']; // Emerald para Ganho, Slate para Restante
+const COLORS = ['#C5A059', '#0A2342']; // Emerald para Ganho, Slate para Restante
 
 const App: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -44,7 +44,7 @@ const App: React.FC = () => {
   const [licitacoes, setLicitacoes] = useState<Licitacao[]>([]);
   const [contratos, setContratos] = useState<ContratoAssessoria[]>([]);
   const [eventos, setEventos] = useState<EventoCalendario[]>([]);
-  const [targetGoal, setTargetGoal] = useState(1500000); // Meta padrão de 1.5M
+  const [targetGoal, setTargetGoal] = useState(150000); // Meta mensal padrão de 150k
 
   const [isSaving, setIsSaving] = useState(false);
   const [statusFilter, setStatusFilter] = useState('Todas');
@@ -120,6 +120,12 @@ const App: React.FC = () => {
       if (evError) console.error('Error fetching eventos:', evError);
       else if (evData) {
         setEventos(evData);
+      }
+
+      // Fetch Config (Monthly Goal)
+      const { data: configData } = await supabase.from('config').select('*').eq('key', 'monthly_goal').single();
+      if (configData) {
+        setTargetGoal(parseFloat(configData.value) || 150000);
       }
 
     } catch (err) {
@@ -338,10 +344,25 @@ const App: React.FC = () => {
     const total = companyLicitacoes.length;
     const licsHoje = companyLicitacoes.filter(l => l.data === hojeStr).length;
     const desclassificadas = companyLicitacoes.filter(l => l.resultado === 'Desclassificado').length;
-    const volume = companyLicitacoes.reduce((acc, curr) => acc + (curr.valorGanho || 0), 0);
-    const percentualMeta = (volume / targetGoal) * 100;
+
+    // Volume total (histórico)
+    const volumeTotal = companyLicitacoes.reduce((acc, curr) => acc + (curr.valorGanho || 0), 0);
+
+    // Volume do mês atual
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    const volumeMensal = companyLicitacoes
+      .filter(l => {
+        const d = new Date(l.data);
+        return d.getMonth() === currentMonth && d.getFullYear() === currentYear && ['Ganhou', 'Homologado'].includes(l.resultado);
+      })
+      .reduce((acc, curr) => acc + (curr.valorGanho || 0), 0);
+
+    const percentualMeta = (volumeMensal / targetGoal) * 100;
     const percDesclassificadas = total > 0 ? (desclassificadas / total) * 100 : 0;
-    return { total, licsHoje, volume, percentualMeta, percDesclassificadas };
+
+    return { total, licsHoje, volume: volumeMensal, volumeTotal, percentualMeta, percDesclassificadas };
   }, [companyLicitacoes, targetGoal, hojeStr]);
 
   const goalData = useMemo(() => [
@@ -364,6 +385,48 @@ const App: React.FC = () => {
     [eventos, agendaDate, selectedCompany]
   );
 
+  const monthlySalesData = useMemo(() => {
+    const year = new Date().getFullYear();
+    const months = [
+      'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+      'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+    ];
+
+    // Filtra especificamente para Azul Papel e status de ganho
+    const azulPapelWins = licitacoes.filter(l =>
+      l.empresa === 'Azul Papel' &&
+      ['Ganhou', 'Homologado'].includes(l.resultado) &&
+      new Date(l.data).getFullYear() === year
+    );
+
+    const monthlyGoal = targetGoal / 12;
+
+    return months.map((month, index) => {
+      const monthTotal = azulPapelWins
+        .filter(l => new Date(l.data).getMonth() === index)
+        .reduce((acc, curr) => acc + (curr.valorGanho || 0), 0);
+
+      return {
+        name: month,
+        total: monthTotal,
+        goalMet: monthTotal >= targetGoal,
+        target: targetGoal
+      };
+    });
+  }, [licitacoes, targetGoal]);
+
+  const handleUpdateMeta = async () => {
+    setIsSaving(true);
+    const { error } = await supabase.from('config').update({ value: targetGoal.toString() }).eq('key', 'monthly_goal');
+    if (error) {
+      alert('Erro ao atualizar meta: ' + error.message);
+    } else {
+      alert('Meta mensal atualizada para todos os ambientes!');
+      await fetchData();
+    }
+    setIsSaving(false);
+  };
+
   const handleDeleteLicitacao = async (id: string) => {
     if (window.confirm('Tem certeza que deseja excluir permanentemente esta licitação?')) {
       try {
@@ -385,8 +448,8 @@ const App: React.FC = () => {
             <input type="file" className="hidden" ref={fileInputRef} onChange={handleFileChange} />
 
             <div className="flex bg-white/5 p-1.5 rounded-[1.8rem] border border-white/5 w-fit">
-              <button onClick={() => setAdminSubTab('licitacoes')} className={`px-8 py-3 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all ${adminSubTab === 'licitacoes' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}>Gestão Operacional</button>
-              <button onClick={() => setAdminSubTab('financeiro')} className={`px-8 py-3 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all ${adminSubTab === 'financeiro' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}>Metas & Faturamento</button>
+              <button onClick={() => setAdminSubTab('licitacoes')} className={`px-8 py-3 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all ${adminSubTab === 'licitacoes' ? 'bg-[#C5A059] text-[#0A2342] shadow-lg' : 'text-slate-500 hover:text-white'}`}>Gestão Operacional</button>
+              <button onClick={() => setAdminSubTab('financeiro')} className={`px-8 py-3 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all ${adminSubTab === 'financeiro' ? 'bg-[#C5A059] text-[#0A2342] shadow-lg' : 'text-slate-500 hover:text-white'}`}>Metas & Faturamento</button>
             </div>
 
             {adminSubTab === 'licitacoes' ? (
@@ -417,7 +480,7 @@ const App: React.FC = () => {
                         {(['Ganhou', 'Homologado'].includes(editStatus)) && <input type="text" value={editValorGanho} onChange={e => setEditValorGanho(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-emerald-400 text-xs font-mono" placeholder="Valor Ganho Final (R$)" />}
                         <div className="flex gap-4 pt-4">
                           <button onClick={() => setEditingLicId(null)} className="flex-1 py-4 bg-white/5 text-slate-400 rounded-xl text-[10px] font-black uppercase">Sair</button>
-                          <button onClick={handleUpdateStatus} className="flex-1 py-4 bg-blue-600 text-white rounded-xl font-black uppercase text-[10px]">Salvar</button>
+                          <button onClick={handleUpdateStatus} className="flex-1 py-4 bg-[#C5A059] text-[#0A2342] rounded-xl font-black uppercase text-[10px] hover:bg-[#E5C789] transition-all">Salvar</button>
                         </div>
                       </div>
                     </div>
@@ -427,7 +490,7 @@ const App: React.FC = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                   <div className="glass p-8 rounded-[2.5rem] border border-blue-500/20 shadow-2xl">
                     <h3 className="text-white font-bold text-xl uppercase mb-6 flex items-center gap-3">
-                      <span className="w-2 h-6 bg-blue-600 rounded-full"></span>
+                      <span className="w-2 h-6 bg-[#C5A059] rounded-full"></span>
                       Gestão Operacional: Novo Registro
                     </h3>
                     <form onSubmit={handleAddLicitacao} className="grid grid-cols-2 gap-4">
@@ -454,7 +517,7 @@ const App: React.FC = () => {
                         <option value="Mac Copiadora">Mac Copiadora</option>
                         <option value="Azul Tec">Azul Tec</option>
                       </select>
-                      <button type="submit" className="col-span-2 py-4 bg-blue-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-500 transition-all shadow-xl shadow-blue-600/20">Cadastrar e Sincronizar Agenda</button>
+                      <button type="submit" className="col-span-2 py-4 bg-[#0A2342] text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-900 transition-all shadow-xl shadow-slate-900/10 border border-[#C5A059]/30">Cadastrar e Sincronizar Agenda</button>
                     </form>
                   </div>
 
@@ -474,10 +537,12 @@ const App: React.FC = () => {
                             onChange={e => setTargetGoal(parseFloat(e.target.value) || 0)}
                             className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-white text-3xl font-black font-mono outline-none focus:ring-2 focus:ring-blue-600 text-center"
                           />
-                          <button className="w-full py-5 bg-blue-600 text-white rounded-2xl font-black uppercase text-[11px] tracking-[0.2em] shadow-2xl shadow-blue-600/30 hover:bg-blue-500 transition-all">Publicar Nova Meta Nexus</button>
+                          <button onClick={handleUpdateMeta} disabled={isSaving} className="w-full py-5 bg-[#0A2342] text-white rounded-2xl font-black uppercase text-[11px] tracking-[0.2em] shadow-2xl shadow-slate-900/30 hover:bg-slate-900 transition-all border border-[#C5A059]/30 disabled:opacity-50">
+                            {isSaving ? 'Sincronizando...' : 'Publicar Nova Meta Nexus'}
+                          </button>
                         </div>
                         <p className="mt-4 text-[9px] text-slate-500 font-bold uppercase tracking-widest text-center leading-relaxed">
-                          Esta configuração impacta o Monitor Inteligente de todos os clientes em tempo real.
+                          Esta configuração impacta o Monitor Inteligente de todos os clientes em tempo real (Meta Mensal).
                         </p>
                       </div>
                     </div>
@@ -523,7 +588,7 @@ const App: React.FC = () => {
                                   <span className="text-[8px] font-black uppercase text-slate-600">Gan</span>
                                   <input id={`ganh-${l.id}`} defaultValue={l.valorGanho?.toFixed(2).replace('.', ',')} className="bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-[10px] text-emerald-400 w-24 outline-none" />
                                 </div>
-                                <button onClick={() => handleSaveValues(l.id)} className="px-3 py-1 bg-blue-600/20 text-blue-400 rounded-lg text-[8px] font-black uppercase hover:bg-blue-600 hover:text-white transition-all">Salvar R$</button>
+                                <button onClick={() => handleSaveValues(l.id)} className="px-3 py-1 bg-[#C5A059]/20 text-[#C5A059] border border-[#C5A059]/30 rounded-lg text-[8px] font-black uppercase hover:bg-[#C5A059] hover:text-[#0A2342] transition-all">Salvar R$</button>
                               </div>
                             </td>
                             <td className="px-8 py-6 text-right">
@@ -534,7 +599,7 @@ const App: React.FC = () => {
                                     <button
                                       key={type}
                                       onClick={(e) => { e.stopPropagation(); triggerFilePicker(type, l.id); }}
-                                      className={`px-3 py-2 rounded-xl border flex items-center gap-2 transition-all ${hasDoc ? 'bg-blue-600 border-blue-500 text-white shadow-lg' : 'bg-white/5 border-white/10 text-slate-500 hover:text-white hover:bg-white/10'
+                                      className={`px-3 py-2 rounded-xl border flex items-center gap-2 transition-all ${hasDoc ? 'bg-[#C5A059] border-[#C5A059]/20 text-[#0A2342] shadow-lg' : 'bg-white/5 border-white/10 text-slate-500 hover:text-white hover:bg-white/10'
                                         }`}
                                     >
                                       <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
@@ -568,16 +633,15 @@ const App: React.FC = () => {
               </>
             ) : (
               <div className="space-y-10 animate-fade-in">
-                {/* Aba financeira focada apenas no gap e faturamento */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                   <div className="glass p-8 rounded-[2.5rem] border border-white/5 flex flex-col justify-center">
                     <div className="flex justify-between items-end mb-4">
                       <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Desempenho Global vs Meta Nexus</span>
-                      <span className="text-2xl font-black text-emerald-400">{Math.round(stats.percentualMeta)}%</span>
+                      <span className="text-2xl font-black text-[#C5A059]">{Math.round(stats.percentualMeta)}%</span>
                     </div>
                     <div className="w-full bg-white/5 h-4 rounded-full overflow-hidden border border-white/10 p-0.5">
                       <div
-                        className="bg-gradient-to-r from-blue-600 to-emerald-500 h-full rounded-full transition-all duration-1000 shadow-xl shadow-blue-600/20"
+                        className="bg-gradient-to-r from-[#0A2342] to-[#C5A059] h-full rounded-full transition-all duration-1000 shadow-xl shadow-[#0A2342]/20"
                         style={{ width: `${Math.min(100, stats.percentualMeta)}%` }}
                       />
                     </div>
@@ -606,7 +670,7 @@ const App: React.FC = () => {
                       </select>
                       <input type="text" placeholder="Valor do Faturamento (R$)" value={newContrato.valor} onChange={e => setNewContrato({ ...newContrato, valor: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white text-xs font-mono" />
                       <input type="date" value={newContrato.vencimento} onChange={e => setNewContrato({ ...newContrato, vencimento: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white text-xs font-mono" />
-                      <button type="submit" className="w-full py-4 bg-blue-600 text-white rounded-xl font-black uppercase text-[10px] shadow-lg shadow-blue-600/20">Arquivar Título</button>
+                      <button type="submit" className="w-full py-4 bg-[#0A2342] text-white rounded-xl font-black uppercase text-[10px] shadow-lg shadow-slate-900/20 border border-[#C5A059]/20 hover:bg-slate-900">Arquivar Título</button>
                     </form>
                   </div>
                   <div className="lg:col-span-2 glass rounded-[2.5rem] overflow-hidden border border-white/5">
@@ -630,7 +694,7 @@ const App: React.FC = () => {
                                 {c.comprovanteUrl ? (
                                   <button onClick={() => window.open(c.comprovanteUrl, '_blank')} className="text-emerald-500 text-[9px] font-black uppercase bg-emerald-500/10 px-4 py-2 rounded-xl border border-emerald-500/20">Ver Comprovante</button>
                                 ) : (
-                                  <button onClick={() => triggerFilePicker('Comprovante', c.id)} className="text-blue-500 text-[9px] font-black uppercase border border-blue-500/20 px-4 py-2 rounded-xl hover:bg-blue-600 hover:text-white transition-all">Anexar PDF</button>
+                                  <button onClick={() => triggerFilePicker('Comprovante', c.id)} className="text-[#C5A059] text-[9px] font-black uppercase border border-[#C5A059]/20 px-4 py-2 rounded-xl hover:bg-[#C5A059] hover:text-[#0A2342] transition-all">Anexar PDF</button>
                                 )}
                               </td>
                             </tr>
@@ -641,8 +705,9 @@ const App: React.FC = () => {
                   </div>
                 </div>
               </div>
-            )}
-          </div>
+            )
+            }
+          </div >
         );
 
       case 'monitor':
@@ -709,7 +774,7 @@ const App: React.FC = () => {
                             const doc = item.documentos?.find(d => d.tipo === type);
                             if (!doc) return null;
                             return (
-                              <button key={doc.id} onClick={(e) => { e.stopPropagation(); window.open(doc.url, '_blank'); }} className="px-4 py-2 bg-blue-600/10 text-blue-400 text-[9px] font-black uppercase rounded-xl border border-blue-600/20 hover:bg-blue-600 hover:text-white transition-all shadow-xl">
+                              <button key={doc.id} onClick={(e) => { e.stopPropagation(); window.open(doc.url, '_blank'); }} className="px-4 py-2 bg-[#C5A059]/10 text-[#C5A059] text-[9px] font-black uppercase rounded-xl border border-[#C5A059]/20 hover:bg-[#C5A059] hover:text-[#0A2342] transition-all shadow-xl">
                                 {doc.tipo}
                               </button>
                             );
@@ -720,7 +785,6 @@ const App: React.FC = () => {
                 </div>
               </div>
 
-              {/* Coluna de Gráfico agora à direita */}
               <div className="lg:col-span-5 glass p-10 rounded-[2.5rem] flex flex-col justify-between shadow-2xl border border-white/5 relative">
                 <div className="relative z-10">
                   <h3 className="text-white font-bold text-lg mb-2 uppercase tracking-widest">Arremate vs Meta</h3>
@@ -728,7 +792,6 @@ const App: React.FC = () => {
                     Alvo Nexus: <span className="text-white">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(targetGoal)}</span>
                   </p>
                 </div>
-
                 <div className="relative flex items-center justify-center">
                   <ResponsiveContainer width="100%" height={280}>
                     <PieChart>
@@ -759,8 +822,8 @@ const App: React.FC = () => {
                     </PieChart>
                   </ResponsiveContainer>
                   <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                    <span className="text-3xl font-black text-white leading-none">{Math.round(stats.percentualMeta)}%</span>
-                    <span className="text-[8px] font-black text-slate-500 uppercase mt-1">Concluído</span>
+                    <h2 className="text-3xl font-black text-white leading-none">{Math.round(stats.percentualMeta)}%</h2>
+                    <p className="text-[8px] font-black text-slate-500 uppercase mt-1">Concluído</p>
                   </div>
                 </div>
 
@@ -787,7 +850,7 @@ const App: React.FC = () => {
               <FilterGroup label="UF" value={regionFilter} onChange={setRegionFilter} options={['Todas', 'SP', 'RJ', 'DF', 'PR', 'MG', 'BA', 'RS', 'PE']} />
               <div className="lg:col-span-2 space-y-1">
                 <label className="text-[10px] font-black text-slate-500 uppercase ml-1">Localizar Processo</label>
-                <input type="text" placeholder="Pesquisar histórico por órgão ou edital..." className="w-full bg-slate-900 border border-white/10 text-white text-xs rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-600" value={organSearch} onChange={e => setOrganSearch(e.target.value)} />
+                <input type="text" placeholder="Pesquisar histórico por órgão ou edital..." className="w-full bg-slate-900 border border-white/10 text-white text-xs rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#C5A059]/20" value={organSearch} onChange={e => setOrganSearch(e.target.value)} />
               </div>
             </div>
             <div className="glass rounded-[3rem] overflow-hidden border border-white/5 shadow-2xl">
@@ -819,7 +882,7 @@ const App: React.FC = () => {
                           <span className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase ${['Ganhou', 'Homologado'].includes(lic.resultado) ? 'bg-emerald-500/10 text-emerald-500' :
                             lic.resultado === 'Desclassificado' ? 'bg-rose-500/10 text-rose-500' :
                               ['Em Recurso', 'Recurso'].includes(lic.resultado) ? 'bg-indigo-500/10 text-indigo-400' :
-                                'bg-blue-500/10 text-blue-400'
+                                'bg-[#C5A059]/10 text-[#C5A059]'
                             }`}>{lic.resultado}</span>
                         </td>
                         <td className="p-8 text-center">
@@ -833,7 +896,7 @@ const App: React.FC = () => {
                               const doc = lic.documentos?.find(d => d.tipo === type);
                               if (!doc) return null;
                               return (
-                                <button key={doc.id} onClick={() => window.open(doc.url, '_blank')} className={`px-3 py-2 border border-white/10 rounded-xl text-[9px] font-black uppercase hover:bg-blue-600 hover:text-white transition-all shadow-xl flex items-center gap-2 ${['Recurso', 'Contra Razão'].includes(doc.tipo as any) ? 'border-indigo-500/30 text-indigo-400' : ''}`}>
+                                <button key={doc.id} onClick={() => window.open(doc.url, '_blank')} className={`px-3 py-2 border border-white/10 rounded-xl text-[9px] font-black uppercase hover:bg-[#C5A059] hover:text-[#0A2342] transition-all shadow-xl flex items-center gap-2 ${['Recurso', 'Contra Razão'].includes(doc.tipo as any) ? 'border-[#C5A059]/30 text-[#C5A059]' : ''}`}>
                                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                                   {doc.tipo}
                                 </button>
@@ -855,7 +918,7 @@ const App: React.FC = () => {
           <div className="animate-fade-in space-y-10">
             <div className="flex items-center justify-between">
               <h3 className="text-white font-black text-xl uppercase tracking-tighter">Agenda Operacional Local</h3>
-              <input type="date" value={agendaDate} onChange={e => setAgendaDate(e.target.value)} className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white text-xs font-bold outline-none cursor-pointer focus:ring-2 focus:ring-blue-600" />
+              <input type="date" value={agendaDate} onChange={e => setAgendaDate(e.target.value)} className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white text-xs font-bold outline-none cursor-pointer focus:ring-2 focus:ring-[#C5A059]/20" />
             </div>
             <div className="glass rounded-[3rem] p-10 space-y-6 shadow-2xl border border-white/5">
               {dailyAgendaEvents.length > 0 ? (
@@ -886,6 +949,62 @@ const App: React.FC = () => {
           </div>
         );
 
+      case 'performance':
+        return (
+          <div className="animate-fade-in space-y-10">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-white font-black text-xl uppercase tracking-tighter">Desempenho Anual: Azul Papel</h3>
+                <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mt-1">Meta Mensal: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(targetGoal)}</p>
+              </div>
+              <div className="text-right">
+                <span className="text-[10px] font-black text-[#C5A059] uppercase tracking-widest">Alvo Anual 2024</span>
+                <p className="text-2xl font-black text-white font-mono">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(targetGoal * 12)}</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {monthlySalesData.map((month, i) => (
+                <div key={i} className={`glass p-8 rounded-[2.5rem] border ${month.goalMet ? 'border-emerald-500/20 shadow-emerald-500/5' : 'border-rose-500/20 shadow-rose-500/5'} transition-all hover:-translate-y-2 group relative overflow-hidden`}>
+                  <div className={`absolute top-0 right-0 w-32 h-32 -mr-16 -mt-16 rounded-full opacity-10 transition-transform group-hover:scale-150 ${month.goalMet ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+
+                  <div className="relative z-10">
+                    <div className="flex justify-between items-start mb-6">
+                      <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{month.name}</span>
+                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center border ${month.goalMet ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-rose-500/10 text-rose-500 border-rose-500/20'}`}>
+                        {month.goalMet ? (
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg>
+                        ) : (
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" /></svg>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <p className={`text-2xl font-black font-mono tracking-tighter ${month.goalMet ? 'text-emerald-400' : 'text-rose-400'}`}>
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(month.total)}
+                      </p>
+                      <div className="flex justify-between items-center bg-white/5 rounded-lg px-3 py-1.5 border border-white/5">
+                        <span className="text-[8px] font-black text-slate-500 uppercase">Performance</span>
+                        <span className={`text-[8px] font-black uppercase ${month.goalMet ? 'text-emerald-500' : 'text-rose-500'}`}>
+                          {Math.round((month.total / month.target) * 100)}% do Alvo
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="mt-6 w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-1000 ${month.goalMet ? 'bg-emerald-500' : 'bg-rose-500'}`}
+                        style={{ width: `${Math.min(100, (month.total / month.target) * 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
       default: return null;
     }
   };
@@ -902,16 +1021,16 @@ const App: React.FC = () => {
               <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 pb-8 border-b border-white/5">
                 <div>
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="w-2 h-8 bg-blue-600 rounded-full shadow-lg shadow-blue-500/40"></div>
-                    <span className="text-[10px] font-black text-blue-500 uppercase tracking-[0.5em]">{isAdmin ? 'ADMIN ALPHA CONSOLE' : `AMBIENTE: ${selectedCompany}`}</span>
+                    <div className="w-2 h-8 bg-[#C5A059] rounded-full shadow-lg shadow-[#C5A059]/20"></div>
+                    <span className="text-[10px] font-black text-[#C5A059] uppercase tracking-[0.5em]">{isAdmin ? 'ADMIN ALPHA CONSOLE' : `AMBIENTE: ${selectedCompany}`}</span>
                   </div>
                   <h2 className="text-4xl font-extrabold text-white tracking-tighter uppercase flex items-center gap-4">
-                    Nexus <span className="text-blue-600 italic">Assessoria</span>
+                    Nexus <span className="text-[#C5A059] italic">Assessoria</span>
                   </h2>
                 </div>
                 {isAdmin && (
                   <div className="bg-white/5 p-1.5 rounded-[2rem] border border-white/5 flex gap-1 shadow-2xl backdrop-blur-xl">
-                    {['TODAS', 'Azul Papel', 'Mac Copiadora', 'Azul Tec'].map(c => <button key={c} onClick={() => setSelectedCompany(c)} className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${selectedCompany === c ? 'bg-blue-600 text-white shadow-xl shadow-blue-600/30' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}>{c}</button>)}
+                    {['TODAS', 'Azul Papel', 'Mac Copiadora', 'Azul Tec'].map(c => <button key={c} onClick={() => setSelectedCompany(c)} className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${selectedCompany === c ? 'bg-[#C5A059] text-[#0A2342] shadow-xl shadow-[#C5A059]/20' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}>{c}</button>)}
                   </div>
                 )}
               </div>
@@ -944,7 +1063,7 @@ const FilterGroup: React.FC<{ label: string; value: string; onChange: (v: string
   <div className="space-y-2">
     <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">{label}</label>
     <div className="relative">
-      <select value={value} onChange={e => onChange(e.target.value)} className="w-full bg-slate-900 border border-white/10 text-white text-xs rounded-2xl px-6 py-4 focus:ring-2 focus:ring-blue-600 outline-none appearance-none font-bold uppercase cursor-pointer hover:bg-slate-800 transition-colors">
+      <select value={value} onChange={e => onChange(e.target.value)} className="w-full bg-slate-900 border border-white/10 text-white text-xs rounded-2xl px-6 py-4 focus:ring-2 focus:ring-[#C5A059]/20 outline-none appearance-none font-bold uppercase cursor-pointer hover:bg-slate-800 transition-colors">
         {options.map(o => <option key={o} value={o}>{o}</option>)}
       </select>
       <svg className="w-4 h-4 text-slate-600 absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7" /></svg>

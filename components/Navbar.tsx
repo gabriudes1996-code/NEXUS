@@ -54,14 +54,12 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginSuccess }) => {
                 onClick={(e) => scrollToSection(e, 'home')}
                 className="flex-shrink-0 flex items-center gap-4 group"
               >
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-[1.2rem] flex items-center justify-center transition-all duration-500 group-hover:rotate-12 group-hover:scale-110 shadow-2xl shadow-blue-500/30">
-                  <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
+                <div className="w-16 h-16 flex items-center justify-center transition-all duration-500 group-hover:rotate-12 group-hover:scale-110 overflow-hidden">
+                  <img src="/logo-nexus.png.png" alt="Nexus Logo" className="w-full h-full object-contain scale-150" />
                 </div>
                 <div className="flex flex-col leading-none">
-                  <span className={`text-2xl font-black tracking-tighter uppercase transition-colors ${scrolled ? 'text-slate-900' : 'text-white'}`}>Nexus</span>
-                  <span className="text-[10px] font-black text-blue-500 uppercase tracking-[0.4em] mt-0.5">Assessoria</span>
+                  <span className={`text-2xl font-black tracking-tighter uppercase transition-colors ${scrolled ? 'text-[#0A2342]' : 'text-white'}`}>Nexus</span>
+                  <span className="text-[10px] font-black text-[#C5A059] uppercase tracking-[0.4em] mt-0.5">Assessoria</span>
                 </div>
               </a>
             </div>
@@ -73,15 +71,15 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginSuccess }) => {
                     key={link.id}
                     href={`#${link.id}`}
                     onClick={(e) => scrollToSection(e, link.id)}
-                    className={`text-sm font-black transition-all uppercase tracking-widest relative group ${scrolled ? 'text-slate-600 hover:text-blue-600' : 'text-slate-300 hover:text-white'}`}
+                    className={`text-sm font-black transition-all uppercase tracking-widest relative group ${scrolled ? 'text-slate-600 hover:text-[#C5A059]' : 'text-slate-300 hover:text-[#C5A059]'}`}
                   >
                     {link.name}
-                    <span className="absolute -bottom-2 left-0 w-0 h-1 bg-gradient-to-r from-blue-600 to-indigo-600 transition-all group-hover:w-full rounded-full"></span>
+                    <span className="absolute -bottom-2 left-0 w-0 h-1 bg-gradient-to-r from-[#C5A059] to-[#E5C789] transition-all group-hover:w-full rounded-full"></span>
                   </a>
                 ))}
                 <button
                   onClick={() => setIsLoginOpen(true)}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-xl shadow-blue-500/20 active:scale-95 flex items-center gap-3 group"
+                  className="bg-[#C5A059] hover:bg-[#E5C789] text-[#0A2342] px-8 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-xl shadow-[#C5A059]/20 active:scale-95 flex items-center gap-3 group"
                 >
                   <svg className="w-4 h-4 group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -126,7 +124,7 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginSuccess }) => {
                   setIsOpen(false);
                   setIsLoginOpen(true);
                 }}
-                className="w-full px-6 py-6 mt-6 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-[2rem] text-center font-black uppercase tracking-widest shadow-2xl shadow-blue-500/30 flex items-center justify-center gap-4"
+                className="w-full px-6 py-6 mt-6 bg-gradient-to-r from-[#0A2342] to-[#051221] text-[#C5A059] border border-[#C5A059]/30 rounded-[2rem] text-center font-black uppercase tracking-widest shadow-2xl flex items-center justify-center gap-4"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />

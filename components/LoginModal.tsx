@@ -38,11 +38,11 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLoginSuccess
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
       <div
-        className="absolute inset-0 bg-slate-900/80 backdrop-blur-md transition-opacity"
+        className="absolute inset-0 bg-[#0A2342]/90 backdrop-blur-md transition-opacity"
         onClick={onClose}
       ></div>
 
-      <div className="relative bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden animate-fade-in border border-slate-100">
+      <div className="relative bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden animate-fade-in border border-[#C5A059]/20">
         <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.05]">
           <img
             src="https://images.unsplash.com/photo-1596443686812-2f45229eebc3?auto=format&fit=crop&q=80&w=1000"
@@ -54,12 +54,10 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLoginSuccess
         <div className="p-8 sm:p-12 relative z-10">
           <div className="flex justify-between items-start mb-8">
             <div>
-              <div className="w-12 h-12 bg-blue-700 rounded-xl flex items-center justify-center shadow-lg shadow-blue-900/20 mb-4">
-                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
+              <div className="w-24 h-24 flex items-center justify-center mb-6 group-hover:rotate-12 transition-all overflow-hidden">
+                <img src="/logo-nexus.png.png" alt="Nexus Logo" className="w-full h-full object-contain scale-150" />
               </div>
-              <h2 className="text-3xl font-black text-slate-900 tracking-tight">Acesso <span className="text-blue-700">Restrito</span></h2>
+              <h2 className="text-3xl font-black text-[#0A2342] tracking-tight">Acesso <span className="text-[#C5A059]">Restrito</span></h2>
               <p className="text-slate-500 text-sm mt-2 font-medium">Nexus Assessoria Studio Digital.</p>
             </div>
             <button
@@ -93,7 +91,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLoginSuccess
                 <input
                   type="text"
                   required
-                  className="w-full pl-12 pr-4 py-4 bg-slate-50/50 backdrop-blur-sm border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-slate-900 font-medium"
+                  className="w-full pl-12 pr-4 py-4 bg-slate-50/50 backdrop-blur-sm border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#C5A059]/20 focus:bg-white transition-all text-slate-900 font-medium"
                   placeholder="Seu login"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -114,7 +112,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLoginSuccess
                 <input
                   type="password"
                   required
-                  className="w-full pl-12 pr-4 py-4 bg-slate-50/50 backdrop-blur-sm border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-slate-900 font-medium"
+                  className="w-full pl-12 pr-4 py-4 bg-slate-50/50 backdrop-blur-sm border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#C5A059]/20 focus:bg-white transition-all text-slate-900 font-medium"
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -125,11 +123,11 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLoginSuccess
             <button
               type="submit"
               disabled={isLoading}
-              className={`w-full py-5 bg-blue-700 text-white font-black rounded-2xl shadow-xl shadow-blue-900/10 transition-all hover:bg-blue-800 hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-3 ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+              className={`w-full py-5 bg-[#C5A059] text-[#0A2342] font-black rounded-2xl shadow-xl shadow-[#C5A059]/10 transition-all hover:bg-[#E5C789] hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-3 ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
             >
               {isLoading ? (
                 <>
-                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <svg className="animate-spin h-5 w-5 text-[#0A2342]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
