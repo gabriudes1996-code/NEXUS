@@ -210,7 +210,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                     <button className="w-full py-4 bg-[#C5A059] hover:bg-[#E5C789] text-[#0A2342] rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-xl shadow-[#C5A059]/10 active:scale-95">Abrir Sala Virtual</button>
                   </div>
                   <div className="group-hover:scale-110 transition-transform duration-700 opacity-80 overflow-hidden w-56 h-56 flex items-center justify-center absolute -top-10 -right-10 pointer-events-none">
-                    <img src="/logo-nexus.png.png" alt="Nexus Logo" className="w-full h-full object-contain contrast-125 brightness-110" />
+                    <img src="/logo-nexus.png" alt="Nexus Logo" className="w-full h-full object-contain contrast-125 brightness-110" />
                   </div>
                 </div>
 

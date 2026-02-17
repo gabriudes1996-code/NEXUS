@@ -28,7 +28,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onLogout, is
     <aside className="w-20 lg:w-80 bg-[#020617] border-r border-white/5 flex flex-col transition-all z-50">
       <div className="p-10 flex items-center gap-5">
         <div className="w-20 h-20 flex items-center justify-center overflow-hidden group-hover:rotate-6 transition-transform">
-          <img src="/logo-nexus.png.png" alt="Nexus Logo" className="w-full h-full object-contain scale-125" />
+          <img src="/logo-nexus.png" alt="Nexus Logo" className="w-full h-full object-contain scale-125" />
         </div>
         <div className="hidden lg:block">
           <span className="text-white font-black text-2xl tracking-tighter block leading-none font-heading uppercase">NEXUS</span>

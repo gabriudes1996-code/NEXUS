@@ -166,7 +166,7 @@ const Services: React.FC = () => {
 
             <div className="mt-12 flex items-center gap-6 p-8 bg-[#0A2342] rounded-[2.5rem] text-white shadow-2xl shadow-slate-900/30 border border-[#C5A059]/20">
               <div className="w-32 h-32 flex items-center justify-center mb-8 overflow-hidden">
-                <img src="/logo-nexus.png.png" alt="Nexus Logo" className="w-full h-full object-contain scale-150" />
+                <img src="/logo-nexus.png" alt="Nexus Logo" className="w-full h-full object-contain scale-150" />
               </div>
               <div>
                 <p className="text-[10px] font-black uppercase tracking-widest text-[#E5C789]">Pronto para o próximo nível?</p>

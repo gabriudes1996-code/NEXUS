@@ -55,7 +55,7 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginSuccess }) => {
                 className="flex-shrink-0 flex items-center gap-4 group"
               >
                 <div className="w-16 h-16 flex items-center justify-center transition-all duration-500 group-hover:rotate-12 group-hover:scale-110 overflow-hidden">
-                  <img src="/logo-nexus.png.png" alt="Nexus Logo" className="w-full h-full object-contain scale-150" />
+                  <img src="/logo-nexus.png" alt="Nexus Logo" className="w-full h-full object-contain scale-150" />
                 </div>
                 <div className="flex flex-col leading-none">
                   <span className={`text-2xl font-black tracking-tighter uppercase transition-colors ${scrolled ? 'text-[#0A2342]' : 'text-white'}`}>Nexus</span>

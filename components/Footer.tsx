@@ -8,7 +8,7 @@ const Footer: React.FC = () => {
         <div className="flex flex-col md:flex-row justify-between items-center gap-8">
           <div className="flex items-center gap-2">
             <div className="w-16 h-16 flex items-center justify-center overflow-hidden">
-              <img src="/logo-nexus.png.png" alt="Nexus Logo" className="w-full h-full object-contain scale-150" />
+              <img src="/logo-nexus.png" alt="Nexus Logo" className="w-full h-full object-contain scale-150" />
             </div>
             <span className="text-xl font-bold text-white tracking-tight">Nexus <span className="text-[#C5A059]">Assessoria</span></span>
           </div>

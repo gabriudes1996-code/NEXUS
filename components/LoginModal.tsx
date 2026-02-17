@@ -55,7 +55,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLoginSuccess
           <div className="flex justify-between items-start mb-8">
             <div>
               <div className="w-24 h-24 flex items-center justify-center mb-6 group-hover:rotate-12 transition-all overflow-hidden">
-                <img src="/logo-nexus.png.png" alt="Nexus Logo" className="w-full h-full object-contain scale-150" />
+                <img src="/logo-nexus.png" alt="Nexus Logo" className="w-full h-full object-contain scale-150" />
               </div>
               <h2 className="text-3xl font-black text-[#0A2342] tracking-tight">Acesso <span className="text-[#C5A059]">Restrito</span></h2>
               <p className="text-slate-500 text-sm mt-2 font-medium">Nexus Assessoria Studio Digital.</p>
