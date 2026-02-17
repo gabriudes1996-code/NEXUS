@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onLoginSuccess?: (isAdmin: boolean) => void;
+  onLoginSuccess?: (isAdmin: boolean, company?: string) => void;
 }
 
 const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLoginSuccess }) => {
@@ -27,7 +27,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLoginSuccess
       } else if (email === 'azulpapel' && password === 'azul6431') {
         setIsLoading(false);
         onClose();
-        if (onLoginSuccess) onLoginSuccess(false);
+        if (onLoginSuccess) onLoginSuccess(false, 'Azul Papel');
       } else {
         setError('Usuário ou senha inválidos. Tente novamente.');
         setIsLoading(false);
@@ -37,18 +37,18 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLoginSuccess
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
-      <div 
+      <div
         className="absolute inset-0 bg-slate-900/80 backdrop-blur-md transition-opacity"
         onClick={onClose}
       ></div>
 
       <div className="relative bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden animate-fade-in border border-slate-100">
         <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.05]">
-            <img 
-                src="https://images.unsplash.com/photo-1596443686812-2f45229eebc3?auto=format&fit=crop&q=80&w=1000" 
-                alt="Brasília - Arquitetura Governamental" 
-                className="w-full h-full object-cover"
-            />
+          <img
+            src="https://images.unsplash.com/photo-1596443686812-2f45229eebc3?auto=format&fit=crop&q=80&w=1000"
+            alt="Brasília - Arquitetura Governamental"
+            className="w-full h-full object-cover"
+          />
         </div>
 
         <div className="p-8 sm:p-12 relative z-10">
@@ -62,7 +62,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLoginSuccess
               <h2 className="text-3xl font-black text-slate-900 tracking-tight">Acesso <span className="text-blue-700">Restrito</span></h2>
               <p className="text-slate-500 text-sm mt-2 font-medium">Nexus Assessoria Studio Digital.</p>
             </div>
-            <button 
+            <button
               onClick={onClose}
               className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-full transition-all"
             >

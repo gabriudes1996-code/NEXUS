@@ -1,6 +1,36 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { supabase } from '../services/supabase';
 
 const Hero: React.FC = () => {
+  const [stats, setStats] = useState({ total: 0, capital: 'R$ 0,00' });
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const { data } = await supabase
+          .from('licitacoes')
+          .select('valor, valor_ganho, resultado')
+          .eq('empresa', 'Azul Papel');
+
+        if (data) {
+          const totalRealized = data.length;
+          // Calculate volume based on 'valor_ganho' for won auctions, similar to App.tsx
+          const totalWonValue = data
+            .reduce((acc, curr) => acc + (curr.valor_ganho || 0), 0);
+
+          setStats({
+            total: totalRealized,
+            capital: new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(totalWonValue)
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching hero stats:', error);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
   const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
     e.preventDefault();
     const element = document.getElementById(id);
@@ -27,9 +57,9 @@ const Hero: React.FC = () => {
 
       {/* Background Image with Overlay */}
       <div className="absolute inset-0 z-0">
-        <img 
-          src="https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=2000" 
-          alt="Licitações e Contratos Governamentais" 
+        <img
+          src="https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=2000"
+          alt="Licitações e Contratos Governamentais"
           className="w-full h-full object-cover opacity-20"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-slate-950/50 via-slate-950 to-slate-950"></div>
@@ -68,7 +98,7 @@ const Hero: React.FC = () => {
           <div className="relative hidden lg:block animate-fade-in" style={{ animationDelay: '0.2s' }}>
             <div className="relative z-10 bg-slate-900/60 backdrop-blur-2xl rounded-[3rem] shadow-2xl p-10 border border-white/10 overflow-hidden">
               <div className="absolute -top-24 -right-24 w-48 h-48 bg-emerald-500/20 rounded-full blur-3xl"></div>
-              
+
               <div className="flex items-center justify-between mb-12 relative z-10">
                 <div className="flex flex-col">
                   <span className="text-blue-400 text-[10px] font-black uppercase tracking-[0.3em]">Nexus Performance</span>
@@ -80,11 +110,11 @@ const Hero: React.FC = () => {
                   </svg>
                 </div>
               </div>
-              
+
               <div className="grid gap-8 relative z-10">
                 <div className="p-8 bg-white/5 rounded-[2rem] border border-white/5 transition-all hover:bg-white/10 hover:translate-x-2 group">
                   <div className="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-2">Licitações Realizadas</div>
-                  <div className="text-5xl font-black text-white tracking-tighter group-hover:text-glow-blue transition-all">5.840<span className="text-blue-500">+</span></div>
+                  <div className="text-5xl font-black text-white tracking-tighter group-hover:text-glow-blue transition-all">{stats.total}<span className="text-blue-500">+</span></div>
                   <div className="mt-4 flex items-center gap-3 text-xs font-bold text-slate-500 uppercase tracking-widest">
                     <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
                     Auditado em Tempo Real
@@ -93,7 +123,7 @@ const Hero: React.FC = () => {
 
                 <div className="p-8 bg-gradient-to-br from-blue-600/20 to-indigo-600/20 rounded-[2rem] border border-blue-500/20 shadow-2xl transition-all hover:translate-x-2 group">
                   <div className="text-[10px] font-black text-blue-300 uppercase tracking-widest mb-2">Capital Gerado</div>
-                  <div className="text-5xl font-black text-white tracking-tighter group-hover:scale-105 transition-transform origin-left">R$ 850M<span className="text-blue-400">+</span></div>
+                  <div className="text-5xl font-black text-white tracking-tighter group-hover:scale-105 transition-transform origin-left">{stats.capital}<span className="text-blue-400"></span></div>
                   <div className="mt-4 flex items-center gap-3 text-xs font-bold text-blue-400/60 uppercase tracking-widest">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />

@@ -26,9 +26,17 @@ const App: React.FC = () => {
     const storedLogin = localStorage.getItem('nexus_auth');
     if (storedLogin) {
       const authData = JSON.parse(storedLogin);
+      if (!authData.isAdmin && !authData.company) {
+        // Invalid or old session for client, force logout
+        localStorage.removeItem('nexus_auth');
+        setIsLoggedIn(false);
+        return;
+      }
+
       setIsLoggedIn(true);
       setIsAdmin(authData.isAdmin);
       setActiveTab(authData.isAdmin ? 'admin' : 'monitor');
+      if (authData.company) setSelectedCompany(authData.company);
     }
   }, []);
 
@@ -119,11 +127,12 @@ const App: React.FC = () => {
     }
   };
 
-  const handleLoginSuccess = (admin: boolean) => {
+  const handleLoginSuccess = (admin: boolean, company?: string) => {
     setIsLoggedIn(true);
     setIsAdmin(admin);
     setActiveTab(admin ? 'admin' : 'monitor');
-    localStorage.setItem('nexus_auth', JSON.stringify({ isLoggedIn: true, isAdmin: admin }));
+    if (company) setSelectedCompany(company);
+    localStorage.setItem('nexus_auth', JSON.stringify({ isLoggedIn: true, isAdmin: admin, company }));
   };
 
   const handleLogout = () => {
@@ -355,6 +364,19 @@ const App: React.FC = () => {
     [eventos, agendaDate, selectedCompany]
   );
 
+  const handleDeleteLicitacao = async (id: string) => {
+    if (window.confirm('Tem certeza que deseja excluir permanentemente esta licitação?')) {
+      try {
+        const { error } = await supabase.from('licitacoes').delete().eq('id', id);
+        if (error) throw error;
+        setLicitacoes(prev => prev.filter(l => l.id !== id));
+      } catch (error) {
+        console.error('Erro ao excluir:', error);
+        alert('Erro ao excluir registro.');
+      }
+    }
+  };
+
   const renderDashboardContent = () => {
     switch (activeTab) {
       case 'admin':
@@ -482,8 +504,14 @@ const App: React.FC = () => {
                               <p className="text-[8px] text-slate-600 uppercase font-black mt-1">Portal: {l.portal || 'N/I'}</p>
                             </td>
                             <td className="px-8 py-6 text-center">
-                              <button onClick={() => setEditingLicId(l.id)} className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase border transition-all hover:scale-105 ${['Ganhou', 'Homologado'].includes(l.resultado) ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : l.resultado === 'Desclassificado' ? 'bg-red-500/10 text-red-500 border-red-500/20' : l.resultado === 'Em Recurso' ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' : 'bg-slate-500/10 text-slate-500 border-white/5'
-                                }`}>{l.resultado}</button>
+                              <div className="flex flex-col items-center gap-2">
+                                <button onClick={() => setEditingLicId(l.id)} className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase border transition-all hover:scale-105 ${['Ganhou', 'Homologado'].includes(l.resultado) ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : l.resultado === 'Desclassificado' ? 'bg-red-500/10 text-red-500 border-red-500/20' : l.resultado === 'Em Recurso' ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' : 'bg-slate-500/10 text-slate-500 border-white/5'
+                                  }`}>{l.resultado}</button>
+                                <button onClick={() => handleDeleteLicitacao(l.id)} className="group flex items-center gap-1 text-[8px] font-bold text-red-500/50 hover:text-red-400 uppercase tracking-wider transition-colors">
+                                  <svg className="w-3 h-3 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                  Excluir
+                                </button>
+                              </div>
                             </td>
                             <td className="px-8 py-6">
                               <div className="flex flex-col gap-2">
@@ -499,7 +527,7 @@ const App: React.FC = () => {
                               </div>
                             </td>
                             <td className="px-8 py-6 text-right">
-                              <div className="flex justify-end flex-wrap gap-2 max-w-[450px]">
+                              <div className="flex justify-end gap-2 items-center">
                                 {(['Edital', 'Proposta', 'Folder'] as DocumentoPDF['tipo'][]).map((type) => {
                                   const hasDoc = l.documentos?.some(d => d.tipo === type);
                                   return (
@@ -656,6 +684,12 @@ const App: React.FC = () => {
                         <div className="text-right">
                           <p className="text-xs font-black text-white leading-none mb-1">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.valor || 0)}</p>
                           <p className="text-[9px] font-bold text-slate-600 uppercase">Estimado</p>
+                          {item.valorGanho && item.valorGanho > 0 && (
+                            <div className="mt-2 animate-fade-in">
+                              <p className="text-xs font-black text-emerald-400 leading-none mb-1">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.valorGanho)}</p>
+                              <p className="text-[9px] font-bold text-emerald-500/60 uppercase">Ganho Real</p>
+                            </div>
+                          )}
                         </div>
                       </div>
 
@@ -669,11 +703,17 @@ const App: React.FC = () => {
                       )}
 
                       <div className="mt-4 pt-4 border-t border-white/5 flex flex-wrap gap-2">
-                        {item.documentos?.filter(doc => ['Edital', 'Proposta', 'Folder'].includes(doc.tipo)).map(doc => (
-                          <button key={doc.id} onClick={(e) => { e.stopPropagation(); window.open(doc.url, '_blank'); }} className="px-4 py-2 bg-blue-600/10 text-blue-400 text-[9px] font-black uppercase rounded-xl border border-blue-600/20 hover:bg-blue-600 hover:text-white transition-all shadow-xl">
-                            {doc.tipo}
-                          </button>
-                        ))}
+                        {Array.from(new Set(item.documentos?.map(d => d.tipo)))
+                          .filter(type => ['Edital', 'Proposta', 'Folder'].includes(type as any))
+                          .map(type => {
+                            const doc = item.documentos?.find(d => d.tipo === type);
+                            if (!doc) return null;
+                            return (
+                              <button key={doc.id} onClick={(e) => { e.stopPropagation(); window.open(doc.url, '_blank'); }} className="px-4 py-2 bg-blue-600/10 text-blue-400 text-[9px] font-black uppercase rounded-xl border border-blue-600/20 hover:bg-blue-600 hover:text-white transition-all shadow-xl">
+                                {doc.tipo}
+                              </button>
+                            );
+                          })}
                       </div>
                     </div>
                   ))}
@@ -789,12 +829,16 @@ const App: React.FC = () => {
                         </td>
                         <td className="p-8 text-right">
                           <div className="flex justify-end gap-2 flex-wrap max-w-[300px] ml-auto">
-                            {lic.documentos?.map(doc => (
-                              <button key={doc.id} onClick={() => window.open(doc.url, '_blank')} className={`px-3 py-2 border border-white/10 rounded-xl text-[9px] font-black uppercase hover:bg-blue-600 hover:text-white transition-all shadow-xl flex items-center gap-2 ${['Recurso', 'Contra Razão'].includes(doc.tipo) ? 'border-indigo-500/30 text-indigo-400' : ''}`}>
-                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                                {doc.tipo}
-                              </button>
-                            ))}
+                            {Array.from(new Set(lic.documentos?.map(d => d.tipo))).map(type => {
+                              const doc = lic.documentos?.find(d => d.tipo === type);
+                              if (!doc) return null;
+                              return (
+                                <button key={doc.id} onClick={() => window.open(doc.url, '_blank')} className={`px-3 py-2 border border-white/10 rounded-xl text-[9px] font-black uppercase hover:bg-blue-600 hover:text-white transition-all shadow-xl flex items-center gap-2 ${['Recurso', 'Contra Razão'].includes(doc.tipo as any) ? 'border-indigo-500/30 text-indigo-400' : ''}`}>
+                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                                  {doc.tipo}
+                                </button>
+                              );
+                            })}
                           </div>
                         </td>
                       </tr>
@@ -852,20 +896,20 @@ const App: React.FC = () => {
         <div className="bg-white text-slate-900"><Navbar onLoginSuccess={handleLoginSuccess} /><Hero /><Services /><Process /><Contact /><Footer /></div>
       ) : (
         <div className="flex h-screen bg-[#020617] text-slate-400 overflow-hidden font-jakarta">
-          <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} onLogout={() => setIsLoggedIn(false)} isAdmin={isAdmin} />
+          <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} onLogout={handleLogout} isAdmin={isAdmin} />
           <main className="flex-1 overflow-y-auto p-6 lg:p-12 relative custom-scrollbar">
             <div className="max-w-[1600px] mx-auto space-y-12">
               <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 pb-8 border-b border-white/5">
                 <div>
                   <div className="flex items-center gap-3 mb-4">
                     <div className="w-2 h-8 bg-blue-600 rounded-full shadow-lg shadow-blue-500/40"></div>
-                    <span className="text-[10px] font-black text-blue-500 uppercase tracking-[0.5em]">{isAdmin ? 'ADMIN ALPHA CONSOLE' : 'NEXUS HUB INTELLIGENCE'}</span>
+                    <span className="text-[10px] font-black text-blue-500 uppercase tracking-[0.5em]">{isAdmin ? 'ADMIN ALPHA CONSOLE' : `AMBIENTE: ${selectedCompany}`}</span>
                   </div>
                   <h2 className="text-4xl font-extrabold text-white tracking-tighter uppercase flex items-center gap-4">
                     Nexus <span className="text-blue-600 italic">Assessoria</span>
                   </h2>
                 </div>
-                {!isAdmin && (
+                {isAdmin && (
                   <div className="bg-white/5 p-1.5 rounded-[2rem] border border-white/5 flex gap-1 shadow-2xl backdrop-blur-xl">
                     {['TODAS', 'Azul Papel', 'Mac Copiadora', 'Azul Tec'].map(c => <button key={c} onClick={() => setSelectedCompany(c)} className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${selectedCompany === c ? 'bg-blue-600 text-white shadow-xl shadow-blue-600/30' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}>{c}</button>)}
                   </div>

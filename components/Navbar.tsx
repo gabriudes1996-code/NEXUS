@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import LoginModal from './LoginModal';
 
 interface NavbarProps {
-  // Fix: Updated onLoginSuccess to accept isAdmin boolean to match handleLoginSuccess signature in App.tsx
-  onLoginSuccess?: (isAdmin: boolean) => void;
+  onLoginSuccess?: (isAdmin: boolean, company?: string) => void;
 }
 
 const Navbar: React.FC<NavbarProps> = ({ onLoginSuccess }) => {
@@ -50,8 +49,8 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginSuccess }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-12">
             <div className="flex items-center">
-              <a 
-                href="#home" 
+              <a
+                href="#home"
                 onClick={(e) => scrollToSection(e, 'home')}
                 className="flex-shrink-0 flex items-center gap-4 group"
               >
@@ -66,7 +65,7 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginSuccess }) => {
                 </div>
               </a>
             </div>
-            
+
             <div className="hidden md:block">
               <div className="ml-10 flex items-center space-x-12">
                 {navLinks.map((link) => (
@@ -91,7 +90,7 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginSuccess }) => {
                 </button>
               </div>
             </div>
-            
+
             <div className="md:hidden">
               <button
                 onClick={() => setIsOpen(!isOpen)}
@@ -138,9 +137,9 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginSuccess }) => {
           </div>
         )}
       </nav>
-      <LoginModal 
-        isOpen={isLoginOpen} 
-        onClose={() => setIsLoginOpen(false)} 
+      <LoginModal
+        isOpen={isLoginOpen}
+        onClose={() => setIsLoginOpen(false)}
         onLoginSuccess={onLoginSuccess}
       />
     </>
