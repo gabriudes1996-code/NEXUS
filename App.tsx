@@ -378,11 +378,19 @@ const App: React.FC = () => {
   }), [companyLicitacoes, statusFilter, regionFilter, organSearch]);
 
   const dailyAgendaEvents = useMemo(() =>
-    eventos.filter(e =>
-      e.data === agendaDate &&
-      (selectedCompany === 'TODAS' || e.empresa === selectedCompany)
-    ),
-    [eventos, agendaDate, selectedCompany]
+    licitacoes.filter(l =>
+      l.data === agendaDate &&
+      (selectedCompany === 'TODAS' || l.empresa === selectedCompany)
+    ).map(l => ({
+      id: l.id,
+      data: l.data,
+      hora: l.hora || '09:00',
+      objeto: `DISPUTA: ${l.numero} - ${l.orgao}`,
+      portal: l.portal || 'N/I',
+      empresa: l.empresa,
+      importancia: 'alta' as const
+    })),
+    [licitacoes, agendaDate, selectedCompany]
   );
 
   const monthlySalesData = useMemo(() => {
@@ -566,7 +574,12 @@ const App: React.FC = () => {
                             <td className="px-8 py-6">
                               <p className="font-bold text-blue-400 uppercase leading-none mb-1">{l.empresa}</p>
                               <p className="text-[10px] text-slate-400 font-mono">{l.numero} • {l.orgao}</p>
-                              <p className="text-[8px] text-slate-600 uppercase font-black mt-1">Portal: {l.portal || 'N/I'}</p>
+                              <div className="flex flex-col items-start gap-1 mt-2">
+                                <span className="text-[9px] font-black text-[#C5A059] uppercase bg-[#C5A059]/10 px-2 py-0.5 rounded-md w-fit">
+                                  {l.data.split('-').reverse().join('/')} às {l.hora || '09:00'}
+                                </span>
+                                <span className="text-[8px] text-slate-600 font-black uppercase tracking-widest ml-1">Portal: {l.portal || 'N/I'}</span>
+                              </div>
                             </td>
                             <td className="px-8 py-6 text-center">
                               <div className="flex flex-col items-center gap-2">
@@ -738,6 +751,8 @@ const App: React.FC = () => {
                           <div>
                             <p className="text-xs font-black text-white uppercase group-hover:text-blue-400 transition-colors leading-none mb-1">{item.numero} • {item.orgao}</p>
                             <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-black text-[#C5A059] uppercase">{item.empresa}</span>
+                              <span className="w-1 h-1 rounded-full bg-slate-700"></span>
                               <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase ${['Ganhou', 'Homologado'].includes(item.resultado) ? 'bg-emerald-500/20 text-emerald-400' :
                                 ['Em Recurso', 'Recurso'].includes(item.resultado) ? 'bg-indigo-500/20 text-indigo-400' :
                                   'bg-white/5 text-slate-400'
@@ -869,7 +884,11 @@ const App: React.FC = () => {
                       <tr key={lic.id} className="text-xs hover:bg-white/[0.02] transition-colors group">
                         <td className="p-8">
                           <p className="font-bold text-white uppercase leading-none mb-2">{lic.orgao}</p>
-                          <p className="text-[10px] text-slate-500 font-mono uppercase">{lic.numero} • {lic.data.split('-').reverse().join('/')}</p>
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-[10px] font-black text-[#C5A059] uppercase">{lic.empresa}</span>
+                            <span className="w-1 h-1 rounded-full bg-slate-700"></span>
+                            <p className="text-[10px] text-slate-500 font-mono uppercase">{lic.numero} • {lic.data.split('-').reverse().join('/')}</p>
+                          </div>
                           <p className="text-[8px] text-slate-600 uppercase font-black mt-1">Portal: {lic.portal || 'Sessão Nexus'}</p>
                           {lic.resultado === 'Desclassificado' && lic.motivoDesclassificacao && (
                             <div className="mt-3 p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-[9px] text-rose-400 font-black uppercase flex items-center gap-2">
@@ -1025,14 +1044,12 @@ const App: React.FC = () => {
                     <span className="text-[10px] font-black text-[#C5A059] uppercase tracking-[0.5em]">{isAdmin ? 'ADMIN ALPHA CONSOLE' : `AMBIENTE: ${selectedCompany}`}</span>
                   </div>
                   <h2 className="text-4xl font-extrabold text-white tracking-tighter uppercase flex items-center gap-4">
-                    Nexus <span className="text-[#C5A059] italic">Assessoria</span>
+                    Nexus <span className="text-[#C5A059] italic">Assessoria em Licitações</span>
                   </h2>
                 </div>
-                {isAdmin && (
-                  <div className="bg-white/5 p-1.5 rounded-[2rem] border border-white/5 flex gap-1 shadow-2xl backdrop-blur-xl">
-                    {['TODAS', 'Azul Papel', 'Mac Copiadora', 'Azul Tec'].map(c => <button key={c} onClick={() => setSelectedCompany(c)} className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${selectedCompany === c ? 'bg-[#C5A059] text-[#0A2342] shadow-xl shadow-[#C5A059]/20' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}>{c}</button>)}
-                  </div>
-                )}
+                <div className="bg-white/5 p-1.5 rounded-[2rem] border border-white/5 flex gap-1 shadow-2xl backdrop-blur-xl">
+                  {['TODAS', 'Azul Papel', 'Mac Copiadora', 'Azul Tec'].map(c => <button key={c} onClick={() => setSelectedCompany(c)} className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${selectedCompany === c ? 'bg-[#C5A059] text-[#0A2342] shadow-xl shadow-[#C5A059]/20' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}>{c}</button>)}
+                </div>
               </div>
               {renderDashboardContent()}
             </div>

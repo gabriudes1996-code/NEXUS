@@ -41,7 +41,7 @@ const Process: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="text-center mb-24">
           <h2 className="text-[#C5A059] font-black uppercase tracking-[0.4em] text-[10px] mb-6">Nossa Metodologia Nexus</h2>
-          <h3 className="text-5xl font-black text-white tracking-tighter">Processos desenhados para <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#C5A059] to-[#E5C789] italic font-heading">ganhar</span>.</h3>
+          <h3 className="text-5xl font-black text-white tracking-tighter">Processos desenhados para <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#C5A059] to-[#E5C789] italic font-heading pr-2">ganhar</span>.</h3>
         </div>
 
         <div className="relative">

@@ -59,7 +59,7 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginSuccess }) => {
                 </div>
                 <div className="flex flex-col leading-none">
                   <span className={`text-2xl font-black tracking-tighter uppercase transition-colors ${scrolled ? 'text-[#0A2342]' : 'text-white'}`}>Nexus</span>
-                  <span className="text-[10px] font-black text-[#C5A059] uppercase tracking-[0.4em] mt-0.5">Assessoria</span>
+                  <span className="text-[10px] font-black text-[#C5A059] uppercase tracking-[0.2em] mt-0.5">Assessoria em Licitações</span>
                 </div>
               </a>
             </div>

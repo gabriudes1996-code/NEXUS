@@ -10,7 +10,7 @@ const Footer: React.FC = () => {
             <div className="w-16 h-16 flex items-center justify-center overflow-hidden">
               <img src="/logo-nexus.png" alt="Nexus Logo" className="w-full h-full object-contain scale-150" />
             </div>
-            <span className="text-xl font-bold text-white tracking-tight">Nexus <span className="text-[#C5A059]">Assessoria</span></span>
+            <span className="text-xl font-bold text-white tracking-tight">Nexus <span className="text-[#C5A059]">Assessoria em Licitações</span></span>
           </div>
 
           <div className="flex gap-8 text-sm text-[#C5A059]/60">
@@ -20,7 +20,7 @@ const Footer: React.FC = () => {
           </div>
 
           <p className="text-sm text-[#C5A059]/40">
-            © {new Date().getFullYear()} Nexus Assessoria. Todos os direitos reservados.
+            © {new Date().getFullYear()} Nexus Assessoria em Licitações. Todos os direitos reservados.
           </p>
         </div>
       </div>

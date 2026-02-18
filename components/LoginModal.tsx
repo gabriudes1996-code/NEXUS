@@ -58,7 +58,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLoginSuccess
                 <img src="/logo-nexus.png" alt="Nexus Logo" className="w-full h-full object-contain scale-150" />
               </div>
               <h2 className="text-3xl font-black text-[#0A2342] tracking-tight">Acesso <span className="text-[#C5A059]">Restrito</span></h2>
-              <p className="text-slate-500 text-sm mt-2 font-medium">Nexus Assessoria Studio Digital.</p>
+              <p className="text-slate-500 text-sm mt-2 font-medium">Nexus Assessoria em Licitações Studio Digital.</p>
             </div>
             <button
               onClick={onClose}

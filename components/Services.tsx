@@ -6,7 +6,7 @@ const modules = [
     title: 'MÓDULO 1 – Inteligência de Mercado',
     items: [
       'Monitoramento diário de portais oficiais',
-      'Análise de oportunidades no segmento de TI',
+      'Análise de oportunidades em diversos segmentos',
       'Estudo de atas e concorrentes',
       'Definição de viabilidade estratégica'
     ],
@@ -152,7 +152,7 @@ const Services: React.FC = () => {
           <div className="lg:sticky lg:top-32 animate-fade-in" style={{ animationDelay: '0.4s' }}>
             <span className="text-[#C5A059] font-black text-xs uppercase tracking-[0.4em] mb-6 block">Inovação e Assessoria</span>
             <h2 className="text-5xl lg:text-6xl font-black text-[#0A2342] leading-[1.05] mb-10 tracking-tighter">
-              A Nexus <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#C5A059] to-[#E5C789] italic">conecta</span> sua empresa ao sucesso governamental.
+              A Nexus <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#C5A059] to-[#E5C789] italic pr-2">conecta</span> sua empresa ao sucesso governamental.
             </h2>
 
             <div className="space-y-8 text-xl text-slate-500 font-medium leading-relaxed mb-12">
@@ -160,7 +160,7 @@ const Services: React.FC = () => {
                 Nossa assessoria digital combina <span className="text-slate-900 font-bold">inteligência de dados</span> com excelência jurídica para garantir que sua empresa não apenas participe, mas vença.
               </p>
               <p>
-                Eliminamos a burocracia do caminho, permitindo que sua equipe foque no que realmente importa: <span className="text-[#C5A059] font-bold underline decoration-[#C5A059]/20 decoration-4 underline-offset-4">a excelência na entrega</span>.
+                Eliminamos a burocracia do caminho, permitindo que sua equipe foque no que realmente importa: <span className="text-[#C5A059] font-bold">a excelência na entrega</span>.
               </p>
             </div>
 

@@ -75,7 +75,7 @@ const Hero: React.FC = () => {
               Liderança e <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#C5A059] via-[#E5C789] to-[#C5A059]">Estratégia</span> em Compras Públicas.
             </h1>
             <p className="text-xl text-slate-400 mb-10 max-w-xl mx-auto lg:mx-0 leading-relaxed font-medium">
-              A Nexus Assessoria provê inteligência técnica e jurídica para empresas que buscam alta performance no mercado governamental brasileiro.
+              A Nexus Assessoria em Licitações provê inteligência técnica e jurídica para empresas que buscam alta performance no mercado governamental brasileiro.
             </p>
             <div className="flex flex-col sm:flex-row gap-5 justify-center lg:justify-start">
               <a
