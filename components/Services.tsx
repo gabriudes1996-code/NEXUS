@@ -73,8 +73,7 @@ const modules = [
     items: [
       'Respostas a diligências técnicas',
       'Interposição de recursos jurídicos',
-      'Contrarrazões fundamentadas',
-      'Sustentação estratégica'
+      'Contrarrazões fundamentadas'
     ],
     icon: 'M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0',
     color: 'rose'
@@ -84,21 +83,11 @@ const modules = [
     items: [
       'Acompanhamento de fase recursal',
       'Monitoramento de adjudicação',
-      'Confirmação final da vitória'
+      'Confirmação final da vitória',
+      'Gestão de garantias e assinaturas'
     ],
     icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
     color: 'amber'
-  },
-  {
-    title: 'MÓDULO 9 – Gestão Contratual',
-    items: [
-      'Análise de minutas e prazos',
-      'Gestão de garantias e assinaturas',
-      'Reequilíbrio econômico-financeiro',
-      'Controle de entregas'
-    ],
-    icon: 'M16 8v8m-4-5v5M8 13v3m7 4h9a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v13a2 2 0 002 2h9z',
-    color: 'cyan'
   }
 ];
 
@@ -160,7 +149,7 @@ const Services: React.FC = () => {
                 Nossa assessoria digital combina <span className="text-slate-900 font-bold">inteligência de dados</span> com excelência jurídica para garantir que sua empresa não apenas participe, mas vença.
               </p>
               <p>
-                Eliminamos a burocracia do caminho, permitindo que sua equipe foque no que realmente importa: <span className="text-[#C5A059] font-bold">a excelência na entrega</span>.
+                Facilitamos o caminho, permitindo que sua equipe foque no que realmente importa: <span className="text-[#C5A059] font-bold">a excelência na entrega</span>.
               </p>
             </div>
 

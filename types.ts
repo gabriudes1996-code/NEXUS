@@ -1,16 +1,16 @@
 
-export type StatusLicitacao = 
-  | 'Pendente' 
-  | 'Ganhou' 
-  | 'Perdeu' 
-  | 'Desclassificado' 
-  | 'Em Recurso' 
+export type StatusLicitacao =
+  | 'Pendente'
+  | 'Ganhou'
+  | 'Perdeu'
+  | 'Desclassificado'
+  | 'Em Recurso'
   | 'Recurso'
-  | 'Homologado' 
-  | 'Contrato Assinado' 
-  | 'Cancelada' 
-  | 'Suspensa' 
-  | 'Frustrada' 
+  | 'Homologado'
+  | 'Contrato Assinado'
+  | 'Cancelada'
+  | 'Suspensa'
+  | 'Frustrada'
   | 'Adiada';
 
 export type MetodoPagamento = 'Pix' | 'Boleto' | 'Cartão' | 'Transferência';
@@ -57,6 +57,7 @@ export interface Licitacao {
   categoria: 'Hardware' | 'Software' | 'Serviços TI' | 'Cloud';
   documentos?: DocumentoPDF[];
   progresso?: ProgressoModulos[];
+  aprovacao?: 'Sim' | 'Não' | null;
 }
 
 export interface EventoCalendario {

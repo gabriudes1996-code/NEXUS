@@ -3,7 +3,7 @@ import React from 'react';
 const steps = [
   {
     title: 'Alinhamento Estratégico',
-    description: 'Diagnóstico profundo do portfólio da empresa e definição dos canais prioritários de venda governamental.',
+    description: 'Auditoria detalhada do portfólio da empresa e definição dos canais prioritários de venda governamental.',
     number: '01',
     color: 'from-[#0A2342] to-[#051221]',
     shadow: 'shadow-slate-900/30'

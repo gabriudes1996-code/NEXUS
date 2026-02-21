@@ -18,7 +18,7 @@ const App: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [activeTab, setActiveTab] = useState('monitor');
-  const [adminSubTab, setAdminSubTab] = useState<'licitacoes' | 'financeiro'>('licitacoes');
+  const [adminSubTab, setAdminSubTab] = useState<'licitacoes' | 'financeiro' | 'historico'>('licitacoes');
   const [selectedCompany, setSelectedCompany] = useState('TODAS');
 
   // Persistence Check on Mount
@@ -63,6 +63,7 @@ const App: React.FC = () => {
   const [editValorGanho, setEditValorGanho] = useState('');
   const [editDataAdiada, setEditDataAdiada] = useState('');
   const [editHoraAdiada, setEditHoraAdiada] = useState('09:00');
+  const [votingLicId, setVotingLicId] = useState<string | null>(null);
 
   const [newContrato, setNewContrato] = useState({
     empresa: 'Azul Tec', valor: '', modelo: 'Mensalidade' as ModeloContrato, metodo: 'Pix' as MetodoPagamento, vencimento: '', hasFile: false
@@ -130,6 +131,26 @@ const App: React.FC = () => {
 
     } catch (err) {
       console.error('Unexpected error fetching data:', err);
+    }
+  };
+
+  const handleConfirmLicitacao = (id: string) => {
+    setVotingLicId(id);
+  };
+
+  const handleVote = async (id: string, status: 'Sim' | 'Não') => {
+    try {
+      setIsSaving(true);
+      const { error } = await supabase.from('licitacoes').update({ aprovacao: status }).eq('id', id);
+      if (error) throw error;
+
+      setLicitacoes(prev => prev.map(l => l.id === id ? { ...l, aprovacao: status as any } : l));
+      setVotingLicId(null);
+    } catch (err) {
+      console.error('Error updating confirmation:', err);
+      alert('Erro ao confirmar licitação.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -377,6 +398,21 @@ const App: React.FC = () => {
     return matchStatus && matchRegion && matchOrgan;
   }), [companyLicitacoes, statusFilter, regionFilter, organSearch]);
 
+  const pendingConfirmationCount = useMemo(() => {
+    if (!isLoggedIn || isAdmin) return 0;
+
+    const targetLics = selectedCompany === 'TODAS'
+      ? licitacoes
+      : licitacoes.filter(l => l.empresa === selectedCompany);
+
+    const pending = targetLics.filter(l =>
+      l.aprovacao !== 'Sim' &&
+      l.aprovacao !== 'Não'
+    );
+
+    return pending.length;
+  }, [licitacoes, selectedCompany, isLoggedIn, isAdmin]);
+
   const dailyAgendaEvents = useMemo(() =>
     licitacoes.filter(l =>
       l.data === agendaDate &&
@@ -457,6 +493,7 @@ const App: React.FC = () => {
 
             <div className="flex bg-white/5 p-1.5 rounded-[1.8rem] border border-white/5 w-fit">
               <button onClick={() => setAdminSubTab('licitacoes')} className={`px-8 py-3 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all ${adminSubTab === 'licitacoes' ? 'bg-[#C5A059] text-[#0A2342] shadow-lg' : 'text-slate-500 hover:text-white'}`}>Gestão Operacional</button>
+              <button onClick={() => setAdminSubTab('historico')} className={`px-8 py-3 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all ${adminSubTab === 'historico' ? 'bg-[#C5A059] text-[#0A2342] shadow-lg' : 'text-slate-500 hover:text-white'}`}>Histórico</button>
               <button onClick={() => setAdminSubTab('financeiro')} className={`px-8 py-3 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all ${adminSubTab === 'financeiro' ? 'bg-[#C5A059] text-[#0A2342] shadow-lg' : 'text-slate-500 hover:text-white'}`}>Metas & Faturamento</button>
             </div>
 
@@ -495,64 +532,84 @@ const App: React.FC = () => {
                   </div>
                 )}
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  <div className="glass p-8 rounded-[2.5rem] border border-blue-500/20 shadow-2xl">
-                    <h3 className="text-white font-bold text-xl uppercase mb-6 flex items-center gap-3">
-                      <span className="w-2 h-6 bg-[#C5A059] rounded-full"></span>
-                      Gestão Operacional: Novo Registro
-                    </h3>
-                    <form onSubmit={handleAddLicitacao} className="grid grid-cols-2 gap-4">
-                      <div className="col-span-2 grid grid-cols-2 gap-4">
-                        <input placeholder="Órgão Licitante" value={newLic.orgao} onChange={e => setNewLic({ ...newLic, orgao: e.target.value })} className="bg-white/5 border border-white/10 rounded-xl p-3 text-white text-xs" required />
-                        <input placeholder="Edital/Processo" value={newLic.numero} onChange={e => setNewLic({ ...newLic, numero: e.target.value })} className="bg-white/5 border border-white/10 rounded-xl p-3 text-white text-xs" required />
-                      </div>
-                      <div>
-                        <label className="text-[9px] font-black text-slate-500 uppercase ml-1 mb-1 block">Data da Sessão</label>
-                        <input type="date" value={newLic.data} onChange={e => setNewLic({ ...newLic, data: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white text-xs" required />
-                      </div>
-                      <div>
-                        <label className="text-[9px] font-black text-slate-500 uppercase ml-1 mb-1 block">Horário</label>
-                        <input type="time" value={newLic.hora} onChange={e => setNewLic({ ...newLic, hora: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white text-xs" required />
-                      </div>
-                      <div className="col-span-2">
-                        <label className="text-[9px] font-black text-slate-500 uppercase ml-1 mb-1 block">Plataforma / Portal</label>
-                        <input placeholder="Ex: ComprasNet, Licitações-e, BLL..." value={newLic.portal} onChange={e => setNewLic({ ...newLic, portal: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white text-xs" required />
-                      </div>
-                      <input placeholder="UF" maxLength={2} value={newLic.estado} onChange={e => setNewLic({ ...newLic, estado: e.target.value.toUpperCase() })} className="bg-white/5 border border-white/10 rounded-xl p-3 text-white text-xs" required />
-                      <input placeholder="Vlr. Estimado (R$)" value={newLic.valor} onChange={e => setNewLic({ ...newLic, valor: e.target.value })} className="bg-white/5 border border-white/10 rounded-xl p-3 text-white text-xs font-mono" />
-                      <select value={newLic.empresa} onChange={e => setNewLic({ ...newLic, empresa: e.target.value })} className="bg-slate-900 border border-white/10 rounded-xl p-3 text-white text-xs col-span-2">
-                        <option value="Azul Papel">Azul Papel</option>
-                        <option value="Mac Copiadora">Mac Copiadora</option>
-                        <option value="Azul Tec">Azul Tec</option>
-                      </select>
-                      <button type="submit" className="col-span-2 py-4 bg-[#0A2342] text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-900 transition-all shadow-xl shadow-slate-900/10 border border-[#C5A059]/30">Cadastrar e Sincronizar Agenda</button>
-                    </form>
-                  </div>
 
-                  {/* Card de Meta movido para Gestão Operacional */}
-                  <div className="glass p-8 rounded-[2.5rem] border border-blue-500/20 shadow-2xl flex flex-col justify-center">
-                    <h4 className="text-white font-black text-sm uppercase mb-6 flex items-center gap-3">
-                      <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
-                      Automação Nexus: Meta de Arremate
-                    </h4>
-                    <div className="space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                  {/* Gestão Operacional e Meta column (8/12) */}
+                  <div className="lg:col-span-8 space-y-8">
+                    <div className="glass p-8 rounded-[2.5rem] border border-blue-500/20 shadow-2xl">
+                      <h3 className="text-white font-bold text-xl uppercase mb-6 flex items-center gap-3">
+                        <span className="w-2 h-6 bg-[#C5A059] rounded-full"></span>
+                        Gestão Operacional: Novo Registro
+                      </h3>
+                      <form onSubmit={handleAddLicitacao} className="grid grid-cols-2 gap-4">
+                        <div className="col-span-2 grid grid-cols-2 gap-4">
+                          <input placeholder="Órgão Licitante" value={newLic.orgao} onChange={e => setNewLic({ ...newLic, orgao: e.target.value })} className="bg-white/5 border border-white/10 rounded-xl p-3 text-white text-xs" required />
+                          <input placeholder="Edital/Processo" value={newLic.numero} onChange={e => setNewLic({ ...newLic, numero: e.target.value })} className="bg-white/5 border border-white/10 rounded-xl p-3 text-white text-xs" required />
+                        </div>
+                        <div>
+                          <label className="text-[9px] font-black text-slate-500 uppercase ml-1 mb-1 block">Data da Sessão</label>
+                          <input type="date" value={newLic.data} onChange={e => setNewLic({ ...newLic, data: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white text-xs" required />
+                        </div>
+                        <div>
+                          <label className="text-[9px] font-black text-slate-500 uppercase ml-1 mb-1 block">Horário</label>
+                          <input type="time" value={newLic.hora} onChange={e => setNewLic({ ...newLic, hora: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white text-xs" required />
+                        </div>
+                        <div className="col-span-2">
+                          <label className="text-[9px] font-black text-slate-500 uppercase ml-1 mb-1 block">Plataforma / Portal</label>
+                          <input placeholder="Ex: ComprasNet, Licitações-e, BLL..." value={newLic.portal} onChange={e => setNewLic({ ...newLic, portal: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white text-xs" required />
+                        </div>
+                        <input placeholder="UF" maxLength={2} value={newLic.estado} onChange={e => setNewLic({ ...newLic, estado: e.target.value.toUpperCase() })} className="bg-white/5 border border-white/10 rounded-xl p-3 text-white text-xs" required />
+                        <input placeholder="Vlr. Estimado (R$)" value={newLic.valor} onChange={e => setNewLic({ ...newLic, valor: e.target.value })} className="bg-white/5 border border-white/10 rounded-xl p-3 text-white text-xs font-mono" />
+                        <select value={newLic.empresa} onChange={e => setNewLic({ ...newLic, empresa: e.target.value })} className="bg-slate-900 border border-white/10 rounded-xl p-3 text-white text-xs col-span-2">
+                          <option value="Azul Papel">Azul Papel</option>
+                          <option value="Mac Copiadora">Mac Copiadora</option>
+                          <option value="Azul Tec">Azul Tec</option>
+                        </select>
+                        <button type="submit" className="col-span-2 py-4 bg-[#0A2342] text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-900 transition-all shadow-xl shadow-slate-900/10 border border-[#C5A059]/30">Cadastrar e Sincronizar Agenda</button>
+                      </form>
+                    </div>
+
+                    <div className="glass p-8 rounded-[2.5rem] border border-blue-500/20 shadow-2xl flex flex-col justify-center">
+                      <h4 className="text-white font-black text-sm uppercase mb-6 flex items-center gap-3">
+                        <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+                        Automação Nexus: Meta de Arremate
+                      </h4>
                       <div>
                         <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 block">Alvo Financeiro Global (R$)</label>
-                        <div className="flex flex-col gap-4">
+                        <div className="flex flex-col sm:flex-row gap-4">
                           <input
                             type="text"
                             value={targetGoal.toString()}
                             onChange={e => setTargetGoal(parseFloat(e.target.value) || 0)}
-                            className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-white text-3xl font-black font-mono outline-none focus:ring-2 focus:ring-blue-600 text-center"
+                            className="flex-1 bg-white/5 border border-white/10 rounded-2xl p-5 text-white text-3xl font-black font-mono outline-none focus:ring-2 focus:ring-blue-600 text-center"
                           />
-                          <button onClick={handleUpdateMeta} disabled={isSaving} className="w-full py-5 bg-[#0A2342] text-white rounded-2xl font-black uppercase text-[11px] tracking-[0.2em] shadow-2xl shadow-slate-900/30 hover:bg-slate-900 transition-all border border-[#C5A059]/30 disabled:opacity-50">
-                            {isSaving ? 'Sincronizando...' : 'Publicar Nova Meta Nexus'}
+                          <button onClick={handleUpdateMeta} disabled={isSaving} className="px-8 py-5 bg-[#0A2342] text-white rounded-2xl font-black uppercase text-[11px] tracking-[0.2em] shadow-2xl shadow-slate-900/30 hover:bg-slate-900 transition-all border border-[#C5A059]/30 disabled:opacity-50">
+                            {isSaving ? 'Sincronizando...' : 'Publicar'}
                           </button>
                         </div>
-                        <p className="mt-4 text-[9px] text-slate-500 font-bold uppercase tracking-widest text-center leading-relaxed">
-                          Esta configuração impacta o Monitor Inteligente de todos os clientes em tempo real (Meta Mensal).
-                        </p>
                       </div>
+                    </div>
+                  </div>
+
+                  {/* History sidebar column (4/12) */}
+                  <div className="lg:col-span-4 glass p-8 rounded-[2.5rem] shadow-2xl border border-white/5 overflow-hidden flex flex-col">
+                    <h3 className="text-white font-bold text-lg mb-6 uppercase tracking-widest">Últimas Realizadas</h3>
+                    <div className="space-y-4 overflow-y-auto max-h-[800px] pr-2 custom-scrollbar">
+                      {licitacoes.slice(0, 10).map((item, i) => (
+                        <div key={i} className="p-4 bg-white/5 rounded-2xl border border-white/5 transition-all hover:bg-white/[0.08] group relative">
+                          <div className="absolute top-4 right-4 flex items-center gap-2">
+                            <div className={`w-2 h-2 rounded-full ${['Ganhou', 'Homologado'].includes(item.resultado) ? 'bg-emerald-500 animate-pulse' :
+                              ['Em Recurso', 'Recurso'].includes(item.resultado) ? 'bg-indigo-400' :
+                                'bg-slate-500'}`} />
+                          </div>
+                          <p className="text-[10px] font-black text-blue-400 uppercase leading-none mb-1 truncate pr-6">{item.orgao}</p>
+                          <p className="text-[9px] text-slate-500 font-mono mb-2">{item.numero}</p>
+                          <div className="flex items-center justify-between">
+                            <span className="text-[9px] font-black text-[#C5A059] uppercase">{item.empresa}</span>
+                            <span className="text-[10px] font-black text-white">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(item.valorGanho || item.valor || 0)}</span>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
@@ -644,6 +701,81 @@ const App: React.FC = () => {
                   </div>
                 </div>
               </>
+            ) : adminSubTab === 'historico' ? (
+              <div className="animate-fade-in space-y-10">
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 bg-white/5 p-6 rounded-[2.5rem] border border-white/5 shadow-2xl">
+                  <FilterGroup label="Filtro Status" value={statusFilter} onChange={setStatusFilter} options={['Todas', 'Ganhou', 'Pendente', 'Perdeu', 'Desclassificado', 'Em Recurso', 'Recurso', 'Adiada']} />
+                  <FilterGroup label="UF" value={regionFilter} onChange={setRegionFilter} options={['Todas', 'SP', 'RJ', 'DF', 'PR', 'MG', 'BA', 'RS', 'PE']} />
+                  <div className="lg:col-span-2 space-y-1">
+                    <label className="text-[10px] font-black text-slate-500 uppercase ml-1">Localizar Processo</label>
+                    <input type="text" placeholder="Pesquisar histórico por órgão ou edital..." className="w-full bg-slate-900 border border-white/10 text-white text-xs rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#C5A059]/20" value={organSearch} onChange={e => setOrganSearch(e.target.value)} />
+                  </div>
+                </div>
+                <div className="glass rounded-[3rem] overflow-hidden border border-white/5 shadow-2xl">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                      <thead className="bg-white/5 text-[9px] font-black uppercase text-slate-500">
+                        <tr>
+                          <th className="p-8">Identificação / Órgão</th>
+                          <th className="p-8 text-center" >Status Nexus</th>
+                          <th className="p-8 text-center">Valor Arrematado</th>
+                          <th className="p-8 text-center">Confirmação</th>
+                          <th className="p-8 text-right">Arquivos</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-white/5">
+                        {historyFilteredLicitacoes.map(lic => (
+                          <tr key={lic.id} className="text-xs hover:bg-white/[0.02] transition-colors group">
+                            <td className="p-8">
+                              <p className="font-bold text-white uppercase leading-none mb-2">{lic.orgao}</p>
+                              <div className="flex items-center gap-2 mb-2">
+                                <span className="text-[10px] font-black text-[#C5A059] uppercase">{lic.empresa}</span>
+                                <span className="w-1 h-1 rounded-full bg-slate-700"></span>
+                                <p className="text-[10px] text-slate-500 font-mono uppercase">{lic.numero} • {lic.data.split('-').reverse().join('/')}</p>
+                              </div>
+                              <p className="text-[8px] text-slate-600 uppercase font-black mt-1">Portal: {lic.portal || 'Sessão Nexus'}</p>
+                            </td>
+                            <td className="p-8 text-center">
+                              <span className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase ${['Ganhou', 'Homologado'].includes(lic.resultado) ? 'bg-emerald-500/10 text-emerald-500' :
+                                lic.resultado === 'Desclassificado' ? 'bg-rose-500/10 text-rose-500' :
+                                  ['Em Recurso', 'Recurso'].includes(lic.resultado) ? 'bg-indigo-500/10 text-indigo-400' :
+                                    'bg-[#C5A059]/10 text-[#C5A059]'
+                                }`}>{lic.resultado}</span>
+                            </td>
+                            <td className="p-8 text-center">
+                              <span className={`text-sm font-mono font-black ${['Ganhou', 'Homologado'].includes(lic.resultado) ? 'text-emerald-400' : 'text-slate-500'}`}>
+                                {lic.valorGanho ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(lic.valorGanho) : '---'}
+                              </span>
+                            </td>
+                            <td className="p-8 text-center">
+                              <div className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase inline-block ${lic.aprovacao === 'Sim' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' :
+                                lic.aprovacao === 'Não' ? 'bg-rose-500/10 text-rose-500 border border-rose-500/20' :
+                                  'bg-white/5 text-slate-500 border border-white/10'
+                                }`}>
+                                {lic.aprovacao || 'Pendente'}
+                              </div>
+                            </td>
+                            <td className="p-8 text-right">
+                              <div className="flex justify-end gap-2 flex-wrap max-w-[300px] ml-auto">
+                                {Array.from(new Set(lic.documentos?.map(d => d.tipo))).map(type => {
+                                  const doc = lic.documentos?.find(d => d.tipo === type);
+                                  if (!doc) return null;
+                                  return (
+                                    <button key={doc.id} onClick={() => window.open(doc.url, '_blank')} className={`px-3 py-2 border border-white/10 rounded-xl text-[9px] font-black uppercase hover:bg-[#C5A059] hover:text-[#0A2342] transition-all shadow-xl flex items-center gap-2`}>
+                                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                                      {doc.tipo}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
             ) : (
               <div className="space-y-10 animate-fade-in">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -727,7 +859,7 @@ const App: React.FC = () => {
         return (
           <div className="space-y-10 animate-fade-in">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <StatCard label="Licitações Feitas" value={stats.total.toString()} trend="Volume Nexus" color="blue" icon="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              <StatCard label="Licitações Realizadas" value={stats.total.toString()} trend="Volume Nexus" color="blue" icon="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               <StatCard label="Arremate vs Meta" value={`${Math.round(stats.percentualMeta)}%`} trend="Nexus Goal" color="indigo" icon="M13 10V3L4 14h7v7l9-11h-7z" />
               <StatCard label="Total Arrematado" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(stats.volume)} trend="Capital Nexus" color="emerald" icon="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2" />
               <StatCard label="Índice Desclassificação" value={`${Math.round(stats.percDesclassificadas)}%`} trend="Taxa de Erro" color="amber" icon="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -736,7 +868,7 @@ const App: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
               {/* Coluna de Últimas Licitações agora à esquerda e com mais destaque */}
               <div className="lg:col-span-7 glass p-8 rounded-[2.5rem] shadow-2xl border border-white/5">
-                <h3 className="text-white font-bold text-lg mb-6 uppercase tracking-widest">Últimas Licitações Feitas</h3>
+                <h3 className="text-white font-bold text-lg mb-6 uppercase tracking-widest">Últimas Licitações Realizadas</h3>
                 <div className="space-y-5">
                   {companyLicitacoes.slice(0, 6).map((item, i) => (
                     <div key={i} className="flex flex-col p-6 bg-white/5 rounded-3xl border border-white/5 transition-all hover:bg-white/[0.08] group">
@@ -876,7 +1008,8 @@ const App: React.FC = () => {
                       <th className="p-8">Identificação / Órgão</th>
                       <th className="p-8 text-center">Status Nexus</th>
                       <th className="p-8 text-center">Valor Arrematado</th>
-                      <th className="p-8 text-right">Documentos Disponíveis</th>
+                      <th className="p-8 text-center">Confirmação</th>
+                      <th className="p-8 text-right">Arquivos</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5">
@@ -908,6 +1041,26 @@ const App: React.FC = () => {
                           <span className={`text-sm font-mono font-black ${['Ganhou', 'Homologado'].includes(lic.resultado) ? 'text-emerald-400' : 'text-slate-500'}`}>
                             {lic.valorGanho ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(lic.valorGanho) : '---'}
                           </span>
+                        </td>
+                        <td className="p-8 text-center">
+                          {isAdmin ? (
+                            <div className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase inline-block ${lic.aprovacao === 'Sim' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' :
+                              lic.aprovacao === 'Não' ? 'bg-rose-500/10 text-rose-500 border border-rose-500/20' :
+                                'bg-white/5 text-slate-500 border border-white/10'
+                              }`}>
+                              {lic.aprovacao || 'Pendente'}
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => handleConfirmLicitacao(lic.id)}
+                              className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase transition-all shadow-lg border ${lic.aprovacao === 'Sim' ? 'bg-emerald-500 text-[#0A2342] border-emerald-400' :
+                                lic.aprovacao === 'Não' ? 'bg-rose-500 text-white border-rose-400' :
+                                  'bg-white/5 text-[#C5A059] border-[#C5A059]/30 hover:bg-[#C5A059] hover:text-[#0A2342]'
+                                }`}
+                            >
+                              {lic.aprovacao ? (lic.aprovacao === 'Sim' ? '✓ Aprovada' : '✗ Recusada') : 'Confirmar'}
+                            </button>
+                          )}
                         </td>
                         <td className="p-8 text-right">
                           <div className="flex justify-end gap-2 flex-wrap max-w-[300px] ml-auto">
@@ -1053,7 +1206,80 @@ const App: React.FC = () => {
               </div>
               {renderDashboardContent()}
             </div>
+
+            {/* Global Voting Modal */}
+            {votingLicId && (
+              <div className="fixed inset-0 z-[120] flex items-center justify-center p-6 bg-slate-950/90 backdrop-blur-md">
+                <div className="bg-[#0A2342] border border-[#C5A059]/30 p-12 rounded-[3.5rem] w-full max-w-xl shadow-3xl text-center relative overflow-hidden animate-fade-in">
+                  <div className="absolute -top-24 -right-24 w-48 h-48 bg-[#C5A059]/10 rounded-full blur-3xl"></div>
+                  <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl"></div>
+
+                  <div className="relative z-10">
+                    <div className="w-20 h-20 bg-[#C5A059]/10 rounded-[2rem] flex items-center justify-center mx-auto mb-8 border border-[#C5A059]/20 shadow-inner">
+                      <svg className="w-10 h-10 text-[#C5A059]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+
+                    <h3 className="text-white font-black text-3xl uppercase tracking-tighter mb-4">Confirmação Nexus</h3>
+                    <p className="text-slate-400 text-sm font-bold uppercase tracking-widest mb-10 px-6 leading-relaxed">
+                      Deseja aprovar esta licitação para o andamento dos processos internos?
+                    </p>
+
+                    <div className="grid grid-cols-2 gap-6">
+                      <button
+                        onClick={() => handleVote(votingLicId, 'Não')}
+                        className="group relative overflow-hidden py-6 bg-rose-500/10 border border-rose-500/30 text-rose-500 rounded-3xl font-black uppercase text-xs tracking-widest transition-all hover:bg-rose-500 hover:text-white hover:shadow-2xl hover:shadow-rose-500/30 active:scale-95"
+                      >
+                        <span className="relative z-10 flex items-center justify-center gap-2">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" /></svg>
+                          Negar
+                        </span>
+                      </button>
+
+                      <button
+                        onClick={() => handleVote(votingLicId, 'Sim')}
+                        className="group relative overflow-hidden py-6 bg-emerald-500 text-[#0A2342] border border-emerald-400 rounded-3xl font-black uppercase text-xs tracking-widest transition-all hover:bg-white hover:shadow-2xl hover:shadow-emerald-500/40 active:scale-95"
+                      >
+                        <span className="relative z-10 flex items-center justify-center gap-2">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg>
+                          Aprovar
+                        </span>
+                      </button>
+                    </div>
+
+                    <button
+                      onClick={() => setVotingLicId(null)}
+                      className="mt-8 text-[10px] font-black text-slate-500 hover:text-white uppercase tracking-[0.3em] transition-colors"
+                    >
+                      Cancelar Operação
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </main>
+          {pendingConfirmationCount > 0 && (
+            <div className="fixed bottom-12 right-12 z-[1000] animate-fade-in">
+              <div className="glass p-6 rounded-[2.5rem] border border-[#C5A059]/40 shadow-2xl flex items-center gap-6 bg-[#0A2342]/95 backdrop-blur-3xl ring-2 ring-[#C5A059]/20">
+                <div className="w-14 h-14 rounded-2xl bg-[#C5A059] flex items-center justify-center shadow-lg shadow-[#C5A059]/40 shrink-0">
+                  <svg className="w-7 h-7 text-[#020617]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+                </div>
+                <div className="flex-1 min-w-[240px]">
+                  <h4 className="text-white font-black text-sm uppercase tracking-widest mb-1">
+                    Atenção {selectedCompany === 'TODAS' ? 'Painel Geral' : selectedCompany}
+                  </h4>
+                  <p className="text-[11px] text-slate-400 font-bold uppercase tracking-tight">Existe {pendingConfirmationCount} {pendingConfirmationCount === 1 ? 'licitação pendente' : 'licitações pendentes'} para confirmar.</p>
+                </div>
+                <button
+                  onClick={() => setActiveTab('history')}
+                  className="px-8 py-4 bg-[#C5A059] text-[#020617] text-[11px] font-black uppercase rounded-2xl hover:bg-white transition-all shadow-xl shadow-[#C5A059]/20 whitespace-nowrap active:scale-95"
+                >
+                  Ver Agora
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
